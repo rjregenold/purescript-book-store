@@ -6,7 +6,8 @@
     "node_modules",
     "bower_components",
     "output",
-    "dist"
+    "dist",
+    "test"
   ],
   "dependencies": {
     "purescript-console": "^3.0.0",
@@ -14,6 +15,10 @@
     "purescript-redox": "^6.0.0",
     "purescript-aff-coroutines": "^5.0.0",
     "purescript-affjax": "^4.0.0",
-    "purescript-dom-classy": "^2.1.0"
+    "purescript-dom-classy": "^2.1.0",
+    "purescript-argonaut": "^3.0.0"
+  },
+  "devDependencies": {
+    "purescript-test-unit": "^12.0.0"
   }
 }

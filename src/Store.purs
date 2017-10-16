@@ -5,6 +5,8 @@ import Types (AppView(..), RemoteData(..), State)
 
 import Control.Comonad.Cofree (Cofree, exploreM, unfoldCofree)
 import Control.Monad.Aff (Aff)
+import Data.Argonaut.Decode (decodeJson)
+import Data.Either (Either(..))
 import Network.HTTP.Affjax as AX
 import Prelude
 import Redox (Store, mkIncInterp, runSubscriptions)
@@ -39,7 +41,11 @@ mkInterp state = unfoldCofree id next state
   where
         search query = do
           res <- AX.get ("https://bookshout.com/api/books/search.json?query=" <> query)
-          pure (state { searchResults = RemoteData_Success res.response })
+          case decodeJson res.response of
+           Right res' ->
+             pure (state { searchResults = RemoteData_Success res' })
+           Left err ->
+             pure (state { searchResults = RemoteData_Failure err })
 
         next :: State -> Run (StoreEff eff) State
         next state' = Run

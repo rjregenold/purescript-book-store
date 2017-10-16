@@ -5,6 +5,8 @@ module Types
   , WebData
   ) where
 
+import Models.Book (BookSearchResult)
+
 import Prelude
 
 
@@ -16,7 +18,7 @@ derive instance eqAppView :: Eq AppView
 
 type State =
   { currentView :: AppView
-  , searchResults :: WebData String
+  , searchResults :: WebData (Array BookSearchResult)
   , wishlist :: Array Int
   }
 
