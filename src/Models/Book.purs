@@ -1,8 +1,8 @@
 module Models.Book where
 
-import Data.Argonaut.Decode (class DecodeJson, (.?), (.??), decodeJson)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.?))
 import Data.Maybe (Maybe)
-import Data.Newtype
+import Data.Newtype (class Newtype)
 import Prelude
 
 
@@ -31,9 +31,6 @@ newtype BookSearchResult = BookSearchResult
 
 derive instance newtypeBookSearchResult :: Newtype BookSearchResult _
 
-instance showBookSearchResult :: Show BookSearchResult where
-  show (BookSearchResult x) = "BookSearchResult { bookId: " <> (show (unwrap x.bookId)) <> " }"
-
 instance decodeJsonBookSearchResult :: DecodeJson BookSearchResult where
   decodeJson json = do
     j <- decodeJson json
@@ -59,8 +56,8 @@ instance decodeJsonBook :: DecodeJson Book where
     j <- decodeJson json
     bookId <- j .? "id"
     title <- j .? "title"
-    isbn <- j .? "title"
+    isbn <- j .? "isbn"
     coverURL <- j .? "cover_url"
     price <- j .? "current_price"
-    synopsis <- j .?? "synopsis"
+    synopsis <- j .? "synopsis"
     pure (Book { bookId, title, isbn, coverURL, price, synopsis })

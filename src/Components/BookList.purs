@@ -1,8 +1,8 @@
 module Components.BookList where
 
 import Action as A
-import Models.Book (BookSearchResult(..))
-import Types (RemoteData(..), State, WebData)
+import Models.Book (BookId, BookSearchResult(..))
+import Types (AppView(..), RemoteData(..), State, WebData)
 
 import Data.Maybe (fromMaybe)
 import Halogen as H
@@ -12,6 +12,7 @@ import Prelude
 
 data Query a 
   = HandleInput (WebData (Array BookSearchResult)) a
+  | ShowBookDetail BookId a
 
 data Message
   = Dispatch (A.ActionDSL (State -> State))
@@ -43,7 +44,8 @@ component =
         RemoteData_Failure err -> [ HH.text err ]
 
   renderResult (BookSearchResult res) =
-    HH.li_ 
+    HH.li
+        [ HE.onClick (HE.input_ (ShowBookDetail res.bookId)) ]
         [ HH.h3_ [ HH.text res.title ]
         , HH.p_ [ HH.text (fromMaybe "" res.synopsis) ]
         ]
@@ -52,4 +54,9 @@ component =
   eval = case _ of
     HandleInput xs next -> do
       H.modify (\st -> st { searchResults = xs })
+      pure next
+    ShowBookDetail bookId next -> do
+      H.raise (Dispatch $ do
+        _ <- A.bookDetails bookId
+        A.changeView AppView_BookDetail)
       pure next

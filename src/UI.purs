@@ -57,7 +57,7 @@ component =
           [ HH.slot' cpSearchView unit SearchView.component state (HE.input HandleSearchView) ]
       , HH.div
           [ viewClasses state.currentView AppView_BookDetail ]
-          [ HH.slot' cpBookDetailView unit BookDetailView.component 1 (HE.input HandleBookDetailView) ]
+          [ HH.slot' cpBookDetailView unit BookDetailView.component (state.bookDetails) (HE.input HandleBookDetailView) ]
       ]
 
   viewClasses a b =
