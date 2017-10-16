@@ -1,7 +1,7 @@
 module Store where
 
-import Action
-import Types
+import Action (Action(..), ActionDSL)
+import Types (RemoteData(..), State)
 
 import Control.Comonad.Cofree (Cofree, exploreM, unfoldCofree)
 import Control.Monad.Aff (Aff)
@@ -38,7 +38,7 @@ mkInterp :: forall eff. State -> Interp (StoreEff eff) State
 mkInterp state = unfoldCofree id next state
   where
         search query = do
-          res <- AX.get ("https://api.github.com/users/" <> query)
+          res <- AX.get ("https://bookshout.com/api/books/search.json?query=" <> query)
           pure (state { searchResults = RemoteData_Success res.response })
 
         next :: State -> Run (StoreEff eff) State
