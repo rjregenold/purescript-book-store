@@ -1,13 +1,21 @@
-module Action where
+module Action 
+  ( Action(..)
+  , ActionDSL
+  , changeView
+  , search
+  , addWishlist
+  , removeWishlist
+  ) where
 
-import Types (State)
+import Types (AppView, State)
 
 import Control.Monad.Free (Free, liftF)
 import Prelude
 
 
 data Action a
-  = Search String a
+  = ChangeView AppView a
+  | Search String a
   | SearchLoading a
   | AddWishlist Int a
   | RemoveWishlist Int a
@@ -15,6 +23,9 @@ data Action a
 derive instance functorAction :: Functor Action
 
 type ActionDSL a = Free Action a
+
+changeView :: AppView -> ActionDSL (State -> State)
+changeView nextView = liftF (ChangeView nextView id)
 
 searchLoading :: ActionDSL (State -> State)
 searchLoading = liftF (SearchLoading id)

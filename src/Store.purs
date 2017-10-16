@@ -1,18 +1,18 @@
 module Store where
 
 import Action (Action(..), ActionDSL)
-import Types (RemoteData(..), State)
+import Types (AppView(..), RemoteData(..), State)
 
 import Control.Comonad.Cofree (Cofree, exploreM, unfoldCofree)
 import Control.Monad.Aff (Aff)
-import Data.Maybe (Maybe(..))
 import Network.HTTP.Affjax as AX
 import Prelude
 import Redox (Store, mkIncInterp, runSubscriptions)
 
 
 newtype Run eff a = Run
-  { search :: String -> Aff eff a
+  { changeView :: AppView -> Aff eff a
+  , search :: String -> Aff eff a
   , searchLoading :: Aff eff a
   , addWishlist :: Int -> Aff eff a
   , removeWishlist :: Int -> Aff eff a
@@ -27,7 +27,7 @@ type StoreEff eff =
 
 initialState :: State
 initialState = 
-  { query: Nothing
+  { currentView: AppView_Search
   , searchResults: RemoteData_NotAsked
   , wishlist: []
   }
@@ -43,17 +43,19 @@ mkInterp state = unfoldCofree id next state
 
         next :: State -> Run (StoreEff eff) State
         next state' = Run
-          { search: search
+          { changeView: \nextView -> pure (state' { currentView = nextView })
+          , search: search
           , searchLoading: pure (state' { searchResults = RemoteData_Loading })
           , addWishlist: \id' -> pure state'
           , removeWishlist: \id' -> pure state'
           }
 
 pair :: forall x y eff. Action (x -> y) -> Run (StoreEff eff) x -> Aff (StoreEff eff) y
-pair (Search query f) (Run interp) = f <$> interp.search query
-pair (SearchLoading f) (Run interp) = f <$> interp.searchLoading
-pair (AddWishlist id' f) (Run interp) = f <$> interp.addWishlist id'
-pair (RemoveWishlist id' f) (Run interp) = f <$> interp.removeWishlist id'
+pair (ChangeView nextView f) (Run interp) = map f (interp.changeView nextView)
+pair (Search query f) (Run interp) = map f (interp.search query)
+pair (SearchLoading f) (Run interp) = map f interp.searchLoading
+pair (AddWishlist id' f) (Run interp) = map f (interp.addWishlist id')
+pair (RemoveWishlist id' f) (Run interp) = map f (interp.removeWishlist id')
 
 runAction :: forall eff. Store State -> ActionDSL (State -> State) -> State -> Aff (StoreEff eff) State
 runAction store cmds state = exploreM pair cmds ((runSubscriptions store <<< mkIncInterp store <<< mkInterp) state)

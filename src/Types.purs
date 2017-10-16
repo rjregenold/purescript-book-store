@@ -1,14 +1,21 @@
 module Types
-  ( State
+  ( AppView(..)
+  , State
   , RemoteData(..)
   , WebData
   ) where
 
-import Data.Maybe (Maybe)
+import Prelude
 
+
+data AppView
+  = AppView_Search
+  | AppView_BookDetail
+
+derive instance eqAppView :: Eq AppView
 
 type State =
-  { query :: Maybe String
+  { currentView :: AppView
   , searchResults :: WebData String
   , wishlist :: Array Int
   }
