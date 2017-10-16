@@ -1,6 +1,6 @@
 module Main where
 
-import Component as Component
+import UI as UI
 import Store (initialState, runAction)
 import Types (State)
 
@@ -34,18 +34,18 @@ storeProducer store = CRA.produce \emit ->
   void (subscribe store (\st -> emit (Left st)))
 
 storeConsumer :: forall eff
-               . (Component.Query ~> Aff (HA.HalogenEffects eff))
+               . (UI.Query ~> Aff (HA.HalogenEffects eff))
               -> CR.Consumer State (Aff (HA.HalogenEffects eff)) Unit
 storeConsumer query = CR.consumer \st -> do
-  query (H.action (Component.StoreUpdated st))
+  query (H.action (UI.StoreUpdated st))
   pure Nothing
 
 storeDispatcher :: forall eff
                  . Store State
-                -> CR.Consumer Component.Message (Aff (HA.HalogenEffects (ComponentEff eff))) Unit
+                -> CR.Consumer UI.Message (Aff (HA.HalogenEffects (ComponentEff eff))) Unit
 storeDispatcher store = CR.consumer \msg -> do
   _ <- case msg of
-    Component.Dispatch cmds -> do
+    UI.Dispatch cmds -> do
       H.liftEff (dispatch (const (pure unit)) (runAction store) store cmds)
   pure Nothing
 
@@ -54,6 +54,6 @@ main = HA.runHalogenAff do
   store <- mkStore initialState
   body <- HA.awaitBody
   initialState' <- getState store
-  io <- runUI Component.component initialState' body
+  io <- runUI UI.component initialState' body
   io.subscribe (storeDispatcher store)
   CR.runProcess (storeProducer store CR.$$ storeConsumer io.query)

@@ -1,4 +1,4 @@
-module Component where
+module UI where
 
 import Action as A
 import Components.BookDetailView as BookDetailView
