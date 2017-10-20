@@ -1,6 +1,7 @@
 module Models.Book where
 
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.?))
+import Data.Generic (class Generic)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Prelude
@@ -11,6 +12,7 @@ newtype BookId = BookId Int
 derive instance eqBookId :: Eq BookId
 derive instance ordBookId :: Ord BookId
 derive instance newtypeBookId :: Newtype BookId _
+derive instance genericBookId :: Generic BookId
 
 instance decodeBookId :: DecodeJson BookId where
   decodeJson = map BookId <<< decodeJson
@@ -20,6 +22,7 @@ newtype ISBN = ISBN String
 derive instance eqISBN :: Eq ISBN
 derive instance newtypeISBN :: Newtype ISBN _
 derive instance ordISBN :: Ord ISBN
+derive instance genericISBN :: Generic ISBN
 
 instance decodeJsonISBN :: DecodeJson ISBN where
   decodeJson = map ISBN <<< decodeJson
@@ -54,6 +57,7 @@ newtype Book = Book
 derive instance newtypeBook :: Newtype Book _
 derive instance eqBook :: Eq Book
 derive instance ordBook :: Ord Book
+derive instance genericBook :: Generic Book
 
 instance decodeJsonBook :: DecodeJson Book where
   decodeJson json = do

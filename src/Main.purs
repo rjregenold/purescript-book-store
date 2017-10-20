@@ -11,6 +11,7 @@ import Control.Monad.Eff (Eff)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import DOM (DOM)
+import DOM.WebStorage (STORAGE)
 import Halogen as H
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
@@ -24,6 +25,7 @@ type ComponentEff eff =
   ( redox :: REDOX
   , ajax :: AX.AJAX
   , dom :: DOM
+  , storage :: STORAGE
   | eff
   )
 
@@ -51,7 +53,8 @@ storeDispatcher store = CR.consumer \msg -> do
 
 main :: forall eff. Eff (HA.HalogenEffects (ComponentEff eff)) Unit
 main = HA.runHalogenAff do
-  store <- mkStore initialState
+  state <- H.liftEff initialState
+  store <- mkStore state
   body <- HA.awaitBody
   initialState' <- getState store
   io <- runUI UI.component initialState' body
