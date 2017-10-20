@@ -1,7 +1,7 @@
 module Store where
 
 import Action (Action(..), ActionDSL)
-import Models.Book (BookId(..))
+import Models.Book (Book, BookId(BookId))
 import Types (AppView(..), RemoteData(..), State)
 
 import Control.Comonad.Cofree (Cofree, exploreM, unfoldCofree)
@@ -10,6 +10,7 @@ import Data.Argonaut.Decode (decodeJson)
 import Data.Array (snoc, unsnoc)
 import Data.Either (either)
 import Data.Maybe (maybe)
+import Data.Set as Set
 import Network.HTTP.Affjax as AX
 import Prelude
 import Redox (Store, mkIncInterp, runSubscriptions)
@@ -22,8 +23,8 @@ newtype Run eff a = Run
   , search :: String -> Aff eff a
   , bookDetailsLoading :: Aff eff a
   , bookDetails :: BookId -> Aff eff a
-  , addWishlist :: Int -> Aff eff a
-  , removeWishlist :: Int -> Aff eff a
+  , addWishlist :: Book -> Aff eff a
+  , removeWishlist :: Book -> Aff eff a
   }
 
 derive instance functorRun :: Functor (Run eff)
@@ -39,7 +40,7 @@ initialState =
   , viewStack: []
   , searchResults: RemoteData_NotAsked
   , bookDetails: RemoteData_NotAsked
-  , wishlist: []
+  , wishlist: Set.empty
   }
 
 type Interp eff a = Cofree (Run eff) a
@@ -58,26 +59,38 @@ mkInterp = unfoldCofree id next
             (\x -> pure $ state { currentView = x.last, viewStack = x.init })
             (unsnoc state.viewStack)
 
+        searchLoading state =
+          pure (state { searchResults = RemoteData_Loading })
+
         search state query = do
           res <- AX.get ("https://bookshout.com/api/books/search.json?query=" <> query)
           let x = either RemoteData_Failure RemoteData_Success (decodeJson res.response)
           pure (state { searchResults = x })
+
+        bookDetailsLoading state =
+          pure (state { bookDetails = RemoteData_Loading })
 
         bookDetails state (BookId bookId) = do
           res <- AX.get ("https://bookshout.com/api/books/" <> show bookId <> ".json")
           let x = either RemoteData_Failure RemoteData_Success (decodeJson res.response)
           pure (state { bookDetails = x })
 
+        addWishlist state book = do
+          pure (state { wishlist = Set.insert book state.wishlist })
+
+        removeWishlist state book = do
+          pure (state { wishlist = Set.delete book state.wishlist })
+
         next :: State -> Run (StoreEff eff) State
         next state = Run
           { changeView: changeView state
           , previousView: previousView state
-          , searchLoading: pure $ state { searchResults = RemoteData_Loading }
+          , searchLoading: searchLoading state
           , search: search state
-          , bookDetailsLoading: pure $ state { bookDetails = RemoteData_Loading }
+          , bookDetailsLoading: bookDetailsLoading state
           , bookDetails: bookDetails state
-          , addWishlist: \id' -> pure state
-          , removeWishlist: \id' -> pure state
+          , addWishlist: addWishlist state
+          , removeWishlist: removeWishlist state
           }
 
 pair :: forall x y eff. Action (x -> y) -> Run (StoreEff eff) x -> Aff (StoreEff eff) y
@@ -87,8 +100,8 @@ pair (SearchLoading f) (Run interp) = map f interp.searchLoading
 pair (Search query f) (Run interp) = map f (interp.search query)
 pair (BookDetailsLoading f) (Run interp) = map f interp.bookDetailsLoading
 pair (BookDetails bookId f) (Run interp) = map f (interp.bookDetails bookId)
-pair (AddWishlist id' f) (Run interp) = map f (interp.addWishlist id')
-pair (RemoveWishlist id' f) (Run interp) = map f (interp.removeWishlist id')
+pair (AddWishlist book f) (Run interp) = map f (interp.addWishlist book)
+pair (RemoveWishlist book f) (Run interp) = map f (interp.removeWishlist book)
 
 runAction :: forall eff. Store State -> ActionDSL (State -> State) -> State -> Aff (StoreEff eff) State
 runAction store cmds state = exploreM pair cmds ((runSubscriptions store <<< mkIncInterp store <<< mkInterp) state)

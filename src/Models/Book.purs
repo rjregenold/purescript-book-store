@@ -9,6 +9,7 @@ import Prelude
 newtype BookId = BookId Int
 
 derive instance eqBookId :: Eq BookId
+derive instance ordBookId :: Ord BookId
 derive instance newtypeBookId :: Newtype BookId _
 
 instance decodeBookId :: DecodeJson BookId where
@@ -18,6 +19,7 @@ newtype ISBN = ISBN String
 
 derive instance eqISBN :: Eq ISBN
 derive instance newtypeISBN :: Newtype ISBN _
+derive instance ordISBN :: Ord ISBN
 
 instance decodeJsonISBN :: DecodeJson ISBN where
   decodeJson = map ISBN <<< decodeJson
@@ -50,6 +52,8 @@ newtype Book = Book
   }
 
 derive instance newtypeBook :: Newtype Book _
+derive instance eqBook :: Eq Book
+derive instance ordBook :: Ord Book
 
 instance decodeJsonBook :: DecodeJson Book where
   decodeJson json = do

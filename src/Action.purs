@@ -9,7 +9,7 @@ module Action
   , removeWishlist
   ) where
 
-import Models.Book (BookId)
+import Models.Book (Book, BookId)
 import Types (AppView, State)
 
 import Control.Monad.Free (Free, liftF)
@@ -23,8 +23,8 @@ data Action a
   | Search String a
   | BookDetailsLoading a
   | BookDetails BookId a
-  | AddWishlist Int a
-  | RemoveWishlist Int a
+  | AddWishlist Book a
+  | RemoveWishlist Book a
 
 derive instance functorAction :: Functor Action
 
@@ -52,8 +52,8 @@ bookDetails bookId = do
   _ <- bookDetailsLoading
   liftF (BookDetails bookId id)
 
-addWishlist :: Int -> ActionDSL (State -> State)
-addWishlist id' = liftF (AddWishlist id' id)
+addWishlist :: Book -> ActionDSL (State -> State)
+addWishlist book = liftF (AddWishlist book id)
 
-removeWishlist :: Int -> ActionDSL (State -> State)
-removeWishlist id' = liftF (RemoveWishlist id' id)
+removeWishlist :: Book -> ActionDSL (State -> State)
+removeWishlist book = liftF (RemoveWishlist book id)

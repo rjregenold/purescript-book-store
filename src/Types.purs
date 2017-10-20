@@ -7,11 +7,13 @@ module Types
 
 import Models.Book (Book, BookSearchResult)
 
+import Data.Set (Set)
 import Prelude
 
 
 data AppView
   = AppView_Search
+  | AppView_Wishlist
   | AppView_BookDetail
 
 derive instance eqAppView :: Eq AppView
@@ -21,7 +23,7 @@ type State =
   , viewStack :: Array AppView
   , searchResults :: WebData (Array BookSearchResult)
   , bookDetails :: WebData Book
-  , wishlist :: Array Int
+  , wishlist :: Set Book
   }
 
 data RemoteData e a

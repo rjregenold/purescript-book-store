@@ -3,12 +3,13 @@ module UI where
 import Action as A
 import Components.BookDetailView as BookDetailView
 import Components.SearchView as SearchView
+import Components.WishlistView as WishlistView
 import Types (AppView(..), State)
 
 import Control.Monad.Aff (Aff)
 import Data.Array (snoc)
-import Data.Either.Nested (Either2)
-import Data.Functor.Coproduct.Nested (Coproduct2)
+import Data.Either.Nested (Either3)
+import Data.Functor.Coproduct.Nested (Coproduct3)
 import Data.Maybe (Maybe(..))
 import DOM (DOM)
 import Halogen as H
@@ -20,15 +21,17 @@ import Prelude
 
 data Query a 
   = StoreUpdated State a
+  | ChangeView AppView a
   | HandleBookDetailView BookDetailView.Message a
+  | HandleWishlistView WishlistView.Message a
   | HandleSearchView SearchView.Message a
 
 data Message
   = Dispatch (A.ActionDSL (State -> State))
 
-type ChildQuery = Coproduct2 SearchView.Query BookDetailView.Query
+type ChildQuery = Coproduct3 SearchView.Query WishlistView.Query BookDetailView.Query
 
-type ChildSlot = Either2 Unit Unit
+type ChildSlot = Either3 Unit Unit Unit
 
 type ComponentEff eff =
   ( dom :: DOM
@@ -46,18 +49,30 @@ component =
   where
 
   cpSearchView = CP.cp1
-  cpBookDetailView = CP.cp2
+  cpWishlistView = CP.cp2
+  cpBookDetailView = CP.cp3
 
   render :: State -> H.ParentHTML Query ChildQuery ChildSlot (Aff (ComponentEff eff))
   render state =
     HH.div_
       [ HH.h1_ [ HH.text "Book Store" ]
       , HH.div
-          [ viewClasses state.currentView AppView_Search ]
-          [ HH.slot' cpSearchView unit SearchView.component state (HE.input HandleSearchView) ]
+            [ viewClasses state.currentView AppView_Search ]
+            [ HH.button
+                [ HE.onClick (HE.input_ (ChangeView AppView_Wishlist)) ]
+                [ HH.text "Show wishlist" ]
+            , HH.slot' cpSearchView unit SearchView.component state (HE.input HandleSearchView) 
+            ]
       , HH.div
-          [ viewClasses state.currentView AppView_BookDetail ]
-          [ HH.slot' cpBookDetailView unit BookDetailView.component (state.bookDetails) (HE.input HandleBookDetailView) ]
+            [ viewClasses state.currentView AppView_Wishlist ]
+            [ HH.button
+                [ HE.onClick (HE.input_ (ChangeView AppView_Search)) ]
+                [ HH.text "Show search" ]
+            , HH.slot' cpWishlistView unit WishlistView.component { wishlist: state.wishlist } (HE.input HandleWishlistView) 
+            ]
+      , HH.div
+            [ viewClasses state.currentView AppView_BookDetail ]
+            [ HH.slot' cpBookDetailView unit BookDetailView.component { book: state.bookDetails, wishlist: state.wishlist } (HE.input HandleBookDetailView) ]
       ]
 
   viewClasses a b =
@@ -74,9 +89,16 @@ component =
     StoreUpdated st next -> do
       H.put st
       pure next
+    ChangeView view next -> do
+      H.raise (Dispatch (A.changeView view))
+      pure next
     HandleSearchView msg next -> do
       case msg of
         SearchView.Dispatch cmds -> H.raise (Dispatch cmds)
+      pure next
+    HandleWishlistView msg next -> do
+      case msg of
+        WishlistView.Dispatch cmds -> H.raise (Dispatch cmds)
       pure next
     HandleBookDetailView msg next -> do
       case msg of

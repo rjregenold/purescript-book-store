@@ -5,6 +5,8 @@ import Models.Book (Book(..))
 import Types (RemoteData(..), State, WebData)
 
 import Data.Maybe (fromMaybe)
+import Data.Set (Set)
+import Data.Set as Set
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -12,28 +14,28 @@ import Halogen.HTML.Properties as HP
 import Prelude
 
 data Query a 
-  = HandleInput (WebData Book) a
+  = HandleInput ComponentState a
   | GoBack a
+  | AddWishlist Book a
+  | RemoveWishlist Book a
 
 data Message
   = Dispatch (A.ActionDSL (State -> State))
 
 type ComponentState = 
   { book :: WebData Book
+  , wishlist :: Set Book
   }
 
-component :: forall m. H.Component HH.HTML Query (WebData Book) Message m
+component :: forall m. H.Component HH.HTML Query ComponentState Message m
 component =
   H.component
-    { initialState
+    { initialState: id
     , render
     , eval
     , receiver: HE.input HandleInput
     }
   where
-
-  initialState :: WebData Book -> ComponentState
-  initialState book = { book: book }
 
   render :: ComponentState -> H.ComponentHTML Query
   render state =
@@ -47,12 +49,12 @@ component =
             RemoteData_Loading  -> 
               HH.p_ [ HH.text "Loading, please wait..." ]
             RemoteData_Success res -> 
-              renderBook res
+              renderBook state res
             RemoteData_Failure err -> 
               HH.p_ [ HH.text err ]
         ]
 
-  renderBook (Book book) =
+  renderBook state b@(Book book) =
     HH.div_
         [ HH.img
             [ HP.src book.coverURL ]
@@ -62,13 +64,32 @@ component =
             [ HH.text (fromMaybe "" book.synopsis) ]
         , HH.p_
             [ HH.text book.price ]
+        , if Set.member b state.wishlist
+          then renderRemoveWishlistBtn b
+          else renderAddWishlistBtn b
         ]
+
+  renderAddWishlistBtn book =
+    HH.button
+        [ HE.onClick (HE.input_ (AddWishlist book)) ]
+        [ HH.text "Add to wishlist" ]
+
+  renderRemoveWishlistBtn book =
+    HH.button
+        [ HE.onClick (HE.input_ (RemoveWishlist book)) ]
+        [ HH.text "Remove from wishlist" ]
 
   eval :: Query ~> H.ComponentDSL ComponentState Query Message m
   eval = case _ of
-    HandleInput book next -> do
-      H.modify (\st -> st { book = book })
+    HandleInput st next -> do
+      H.put st
       pure next
     GoBack next -> do
       H.raise (Dispatch A.previousView)
+      pure next
+    AddWishlist book next -> do
+      H.raise (Dispatch (A.addWishlist book))
+      pure next
+    RemoveWishlist book next -> do
+      H.raise (Dispatch (A.removeWishlist book))
       pure next
