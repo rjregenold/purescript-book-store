@@ -1,6 +1,7 @@
 module Components.BookList where
 
 import Action as A
+import HTML (stripTags)
 import Models.Book (BookId, BookSearchResult(..))
 import Types (AppView(..), RemoteData(..), State, WebData)
 
@@ -47,7 +48,7 @@ component =
     HH.li
         [ HE.onClick (HE.input_ (ShowBookDetail res.bookId)) ]
         [ HH.h3_ [ HH.text res.title ]
-        , HH.p_ [ HH.text (fromMaybe "" res.synopsis) ]
+        , HH.p_ [ HH.text (fromMaybe "" (map stripTags res.synopsis)) ]
         ]
 
   eval :: Query ~> H.ComponentDSL ComponentState Query Message m
