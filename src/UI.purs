@@ -54,25 +54,29 @@ component =
 
   render :: State -> H.ParentHTML Query ChildQuery ChildSlot (Aff (ComponentEff eff))
   render state =
-    HH.div_
-      [ HH.h1_ [ HH.text "Book Store" ]
-      , HH.div
-            [ viewClasses state.currentView AppView_Search ]
-            [ HH.button
-                [ HE.onClick (HE.input_ (ChangeView AppView_Wishlist)) ]
-                [ HH.text "Show wishlist" ]
-            , HH.slot' cpSearchView unit SearchView.component state (HE.input HandleSearchView) 
-            ]
-      , HH.div
-            [ viewClasses state.currentView AppView_Wishlist ]
-            [ HH.button
-                [ HE.onClick (HE.input_ (ChangeView AppView_Search)) ]
-                [ HH.text "Show search" ]
-            , HH.slot' cpWishlistView unit WishlistView.component { wishlist: state.wishlist } (HE.input HandleWishlistView) 
-            ]
-      , HH.div
-            [ viewClasses state.currentView AppView_BookDetail ]
-            [ HH.slot' cpBookDetailView unit BookDetailView.component { book: state.bookDetails, wishlist: state.wishlist } (HE.input HandleBookDetailView) ]
+    HH.div
+      [ HP.classes [ HH.ClassName "container" ] ]
+      [ HH.div
+          [ HP.classes [ HH.ClassName "row" ] ]
+          [ HH.h1_ [ HH.text "Book Store" ]
+          , HH.div
+                [ viewClasses state.currentView AppView_Search ]
+                [ HH.button
+                    [ HE.onClick (HE.input_ (ChangeView AppView_Wishlist)) ]
+                    [ HH.text "Show wishlist" ]
+                , HH.slot' cpSearchView unit SearchView.component state (HE.input HandleSearchView) 
+                ]
+          , HH.div
+                [ viewClasses state.currentView AppView_Wishlist ]
+                [ HH.button
+                    [ HE.onClick (HE.input_ (ChangeView AppView_Search)) ]
+                    [ HH.text "Show search" ]
+                , HH.slot' cpWishlistView unit WishlistView.component { wishlist: state.wishlist } (HE.input HandleWishlistView) 
+                ]
+          , HH.div
+                [ viewClasses state.currentView AppView_BookDetail ]
+                [ HH.slot' cpBookDetailView unit BookDetailView.component { book: state.bookDetails, wishlist: state.wishlist } (HE.input HandleBookDetailView) ]
+          ]
       ]
 
   viewClasses a b =

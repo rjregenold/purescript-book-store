@@ -6,6 +6,7 @@ import Models.Book (BookId, BookSearchResult(..))
 import Types (AppView(..), RemoteData(..), State, WebData)
 
 import Data.Maybe (fromMaybe)
+import Data.String (length, take)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -48,8 +49,20 @@ component =
     HH.li
         [ HE.onClick (HE.input_ (ShowBookDetail res.bookId)) ]
         [ HH.h3_ [ HH.text res.title ]
-        , HH.p_ [ HH.text (fromMaybe "" (map stripTags res.synopsis)) ]
+        , HH.p_ [ HH.text res.price ]
+        , HH.p_ [ HH.text (renderSynopsis res.synopsis) ]
         ]
+
+  renderSynopsis =
+    fromMaybe "" <<< map (truncateSynopsis <<< stripTags)
+
+  truncateLength = 100
+
+  truncateSynopsis s =
+    if length s <= truncateLength
+    then s
+    else (take truncateLength s) <> "..."
+
 
   eval :: Query ~> H.ComponentDSL ComponentState Query Message m
   eval = case _ of

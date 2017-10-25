@@ -1,15 +1,16 @@
 module Components.WishlistView where
 
 import Action as A
-import Models.Book (Book(..), BookId)
+import Models.Book (Book(..), ISBN(..), BookId)
 import Types (AppView(AppView_BookDetail), State)
 
 import Data.Array (fromFoldable)
-import Data.Maybe (fromMaybe)
+import Data.Newtype (un)
 import Data.Set (Set)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
 import Prelude
 
 data Query a 
@@ -40,8 +41,9 @@ component =
   renderBook (Book book) =
     HH.li
         [ HE.onClick (HE.input_ (ShowBookDetail book.bookId)) ]
-        [ HH.h3_ [ HH.text book.title ]
-        , HH.p_ [ HH.text (fromMaybe "" book.synopsis) ]
+        [ HH.img [ HP.src book.coverURL ]
+        , HH.h3_ [ HH.text book.title ]
+        , HH.p_ [ HH.text (un ISBN book.isbn) ]
         ]
 
   eval :: Query ~> H.ComponentDSL ComponentState Query Message m

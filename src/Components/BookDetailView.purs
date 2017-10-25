@@ -1,6 +1,7 @@
 module Components.BookDetailView where
 
 import Action as A
+import HTML (stripTags)
 import Models.Book (Book(..))
 import Types (RemoteData(..), State, WebData)
 
@@ -61,7 +62,7 @@ component =
         , HH.p_
             [ HH.text book.title ]
         , HH.p_
-            [ HH.text (fromMaybe "" book.synopsis) ]
+            [ HH.text (fromMaybe "" (map stripTags book.synopsis)) ]
         , HH.p_
             [ HH.text book.price ]
         , if Set.member b state.wishlist
